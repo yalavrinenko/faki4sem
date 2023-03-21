@@ -1,4 +1,6 @@
 #include "src/memdev.hpp"
+#include "src/buffer.h"
+#include <fmt/core.h>
 
 #include <gtest/gtest.h>
 
@@ -27,16 +29,28 @@ TEST(CommonDevice, Ranked) {
 }
 
 //We want to have next code
-//TEST(CommontDevice, Access) {
-//  auto device = cooldev::memory::v2::make_device(
-//      cooldev::memory::device_type::ndimensional, 1024);
-//
-//  auto acc = device.get_direct_access<int>();
-//
-//  acc[10] = 45;
-//  acc[11] = acc[10] + acc[78] * 5;
-//  for (auto v: acc) {}
-//
-//  std::copy(acc.begin(), acc.end(),
-//            std::ostream_iterator<int>(std::cout, "\n"));
-//}
+TEST(CommontDevice, Access) {
+  auto device = cooldev::memory::make_device(
+      cooldev::memory::device_type::ndimensional, 1024);
+
+
+  buffer<int> buf(std::get<cooldev::memory::nd_address>(device.space()));
+
+  buf[10] = 0;
+  ASSERT_EQ(buf[10], 0);
+
+  buf[10] = 5;
+
+  if (buf[10] == 5){
+    fmt::print("Equal");
+  }
+
+  ASSERT_EQ(buf[10], 5);
+
+  buf[10] = buf[10] * 2;
+  ASSERT_EQ(buf[10], 10);
+
+
+  buf[5] = buf[10];
+  ASSERT_EQ(buf[5], buf[10]);
+}

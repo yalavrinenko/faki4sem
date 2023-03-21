@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <variant>
+#include <unordered_map>
 
 namespace cooldev::memory {
   enum class device_type { sequential, ndimensional };
@@ -25,19 +26,33 @@ namespace cooldev::memory {
     [[nodiscard]] virtual address space_() const = 0;
   };
 
+  class device;
+  device make_device(device_type type, uint64_t size);
+
   class device {
   public:
+
+    static device& create(device_type type, uint64_t size){
+      static std::unordered_map<device_type, device> device_pool;
+      if (!device_pool.contains(type))
+        device_pool.emplace(type, make_device(type, size));
+      return device_pool.at(type);
+    }
+
+    [[nodiscard]] decltype(auto) space() const {
+      return impl_->space();
+    }
+
+  private:
+    friend device make_device(device_type type, uint64_t size);
+
     template<typename Implementation>
     explicit device(std::unique_ptr<Implementation> impl)
         : impl_{std::move(impl)} {}
 
-    [[nodiscard]] decltype(auto) space() const { return impl_->space(); }
-
   private:
     std::unique_ptr<implementation_base> impl_;
   };
-
-  device make_device(device_type type, uint64_t size);
 }// namespace cooldev::memory
 
 #endif//CMAKE_DEMO_MEMDEV_HPP
