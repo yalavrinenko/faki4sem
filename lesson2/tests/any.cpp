@@ -8,9 +8,20 @@ namespace detail {
   class my_any {
   public:
     template<typename T>
-    explicit my_any(T value) : obj_{std::make_unique<T>(std::move(value))} {}
+    explicit my_any(T value) : obj_{std::make_unique<handler<T>>(std::move(value))} {}
 
     decltype(auto) get() { return obj_->get(); }
+
+    template<typename T>
+    auto& cast_to(){
+//      auto &type_obj = dynamic_cast<handler<T>&>(*obj_);
+//      return *static_cast<T*>(type_obj.get());
+
+      if (typeid(T) == obj_->type())
+        return *static_cast<T*>(get());
+
+      throw std::bad_any_cast{};
+    }
 
     // HW: Add move/copy-assignment operators
     // HW: Add copy/move-ctor
@@ -18,11 +29,17 @@ namespace detail {
   private:
     struct base {
       virtual void *get() = 0;
+
+      virtual const std::type_info& type() const = 0;
+
+      virtual ~base() = default;
     };
 
     template<typename T>
     struct handler : base {
       explicit handler(T value) : var{std::move(value)} {}
+
+      const std::type_info& type() const override { return typeid(T); }
 
       void *get() override { return &var; }
 

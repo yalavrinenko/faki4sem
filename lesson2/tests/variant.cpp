@@ -52,3 +52,69 @@ TEST(Variant, InvokeFunction) {
   v = std::string{"Some string value (or not)"};
   ::process_variant_trivial(v);
 }
+
+template<typename... T>
+struct Overloads : T... {
+  using T::operator()...;
+};
+
+TEST(Variant, Visitor) {
+  //  struct {
+  //    std::string operator() (int value) const{
+  //      fmt::print("We have int variant ({})! {}\n", __PRETTY_FUNCTION__ ,value);
+  //      return "int";
+  //    }
+  //
+  //    std::string operator() (double value) const{
+  //      fmt::print("We have double variant! ({}) {}\n",__PRETTY_FUNCTION__, value);
+  //      return "double";
+  //    }
+  //
+  //    std::string operator() (const std::string &str) const {
+  //      fmt::print("We have std::string in variant! ({}) {}\n", __PRETTY_FUNCTION__ ,str);
+  //      return "std::string";
+  //    }
+  //  } variant_visitor;
+
+  //  auto visitor = Overloads{
+  //        [](int value){
+  //          fmt::print("We have int variant ({})! {}\n", __PRETTY_FUNCTION__ ,value);
+  //          return "int";
+  //        },
+  //        [](double value){
+  //          fmt::print("We have double variant! ({}) {}\n",__PRETTY_FUNCTION__, value);
+  //          return "double";
+  //        },
+  //        [](const std::string &str){
+  //          fmt::print("We have std::string in variant! ({}) {}\n", __PRETTY_FUNCTION__ ,str);
+  //          return "std::string";
+  //        }
+  //  };
+
+  auto visitor = [](auto &&value) {
+    using T = std::decay_t<decltype(value)>;
+    if constexpr (std::is_same_v<T, int>) {
+      fmt::print("We have int variant ({})! {}\n", __PRETTY_FUNCTION__, value);
+      return "int";
+    }
+    if constexpr (std::is_same_v<T, double>) {
+      fmt::print("We have double variant! ({}) {}\n", __PRETTY_FUNCTION__,
+                 value);
+      return "double";
+    }
+    if constexpr (std::is_same_v<T, std::string>) {
+      fmt::print("We have std::string in variant! ({}) {}\n",
+                 __PRETTY_FUNCTION__, value);
+      return "std::string";
+    }
+  };
+
+  std::variant<int, double, std::string> v = 10;
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, v));
+
+  v = 10.89;
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, v));
+
+  v = "Awesome str";
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, v));
+}

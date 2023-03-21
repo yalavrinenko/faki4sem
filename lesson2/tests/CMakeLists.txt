@@ -14,7 +14,7 @@ FetchContent_MakeAvailable(googletest)
 include(GoogleTest)
 enable_testing()
 
-add_executable(all_test any.cpp variant.cpp)
+add_executable(all_test any.cpp variant.cpp common.cpp)
 target_link_libraries(all_test PRIVATE gtest_main extmem fmt::fmt)
 target_include_directories(all_test PRIVATE ${CMAKE_SOURCE_DIR})
 
