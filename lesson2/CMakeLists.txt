@@ -8,6 +8,6 @@ set(CMAKE_CXX_STANDARD 20)
 # Make compiler wild! Try to use these options everywhere
 add_compile_options(-Wall -Werror)
 
-add_library(extmem INTERFACE src/common.hpp)
+add_library(extmem SHARED src/memdev.cpp src/ranked_device.cpp src/sequential_device.cpp)
 
 add_subdirectory(tests)

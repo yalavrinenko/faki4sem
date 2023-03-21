@@ -53,44 +53,72 @@ TEST(Variant, InvokeFunction) {
   ::process_variant_trivial(v);
 }
 
+class Visitor : public ::testing::Test {
+protected:
+  std::variant<int, double, std::string> var1 = 10;
+  std::variant<int, double, std::string> var2 = 10.89;
+  std::variant<int, double, std::string> var3 = "Awesome str";
+};
+
+TEST_F(Visitor, FunctionalObject) {
+  struct {
+    std::string operator()(int value) const {
+      fmt::print("We have int variant ({})! {}\n", __PRETTY_FUNCTION__, value);
+      return "int";
+    }
+
+    std::string operator()(double value) const {
+      fmt::print("We have double variant! ({}) {}\n", __PRETTY_FUNCTION__,
+                 value);
+      return "double";
+    }
+
+    std::string operator()(const std::string &str) const {
+      fmt::print("We have std::string in variant! ({}) {}\n",
+                 __PRETTY_FUNCTION__, str);
+      return "std::string";
+    }
+  } variant_visitor;
+
+  fmt::print("Visit to variant. Result = {}\n",
+             std::visit(variant_visitor, var1));
+  fmt::print("Visit to variant. Result = {}\n",
+             std::visit(variant_visitor, var2));
+  fmt::print("Visit to variant. Result = {}\n",
+             std::visit(variant_visitor, var3));
+}
+
 template<typename... T>
 struct Overloads : T... {
   using T::operator()...;
 };
+template<typename... T>
+Overloads(T...) -> Overloads<T...>;
 
-TEST(Variant, Visitor) {
-  //  struct {
-  //    std::string operator() (int value) const{
-  //      fmt::print("We have int variant ({})! {}\n", __PRETTY_FUNCTION__ ,value);
-  //      return "int";
-  //    }
-  //
-  //    std::string operator() (double value) const{
-  //      fmt::print("We have double variant! ({}) {}\n",__PRETTY_FUNCTION__, value);
-  //      return "double";
-  //    }
-  //
-  //    std::string operator() (const std::string &str) const {
-  //      fmt::print("We have std::string in variant! ({}) {}\n", __PRETTY_FUNCTION__ ,str);
-  //      return "std::string";
-  //    }
-  //  } variant_visitor;
+TEST_F(Visitor, LambdaObject) {
+  auto visitor =
+      Overloads{[](int value) {
+                  fmt::print("We have int variant ({})! {}\n",
+                             __PRETTY_FUNCTION__, value);
+                  return "int";
+                },
+                [](double value) {
+                  fmt::print("We have double variant! ({}) {}\n",
+                             __PRETTY_FUNCTION__, value);
+                  return "double";
+                },
+                [](const std::string &str) {
+                  fmt::print("We have std::string in variant! ({}) {}\n",
+                             __PRETTY_FUNCTION__, str);
+                  return "std::string";
+                }};
 
-  //  auto visitor = Overloads{
-  //        [](int value){
-  //          fmt::print("We have int variant ({})! {}\n", __PRETTY_FUNCTION__ ,value);
-  //          return "int";
-  //        },
-  //        [](double value){
-  //          fmt::print("We have double variant! ({}) {}\n",__PRETTY_FUNCTION__, value);
-  //          return "double";
-  //        },
-  //        [](const std::string &str){
-  //          fmt::print("We have std::string in variant! ({}) {}\n", __PRETTY_FUNCTION__ ,str);
-  //          return "std::string";
-  //        }
-  //  };
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, var1));
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, var2));
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, var3));
+}
 
+TEST_F(Visitor, LambdaAggregation) {
   auto visitor = [](auto &&value) {
     using T = std::decay_t<decltype(value)>;
     if constexpr (std::is_same_v<T, int>) {
@@ -109,12 +137,7 @@ TEST(Variant, Visitor) {
     }
   };
 
-  std::variant<int, double, std::string> v = 10;
-  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, v));
-
-  v = 10.89;
-  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, v));
-
-  v = "Awesome str";
-  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, v));
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, var1));
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, var2));
+  fmt::print("Visit to variant. Result = {}\n", std::visit(visitor, var3));
 }
