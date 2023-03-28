@@ -31,10 +31,10 @@ TEST(CommonDevice, Ranked) {
 //We want to have next code
 TEST(CommontDevice, Access) {
   auto device = cooldev::memory::make_device(
-      cooldev::memory::device_type::ndimensional, 1024);
+      cooldev::memory::device_type::sequential, 1024);
 
 
-  buffer<int> buf(std::get<cooldev::memory::nd_address>(device.space()));
+  buffer<int> buf(device.space(), 1024);
 
   buf[10] = 0;
   ASSERT_EQ(buf[10], 0);
@@ -53,4 +53,8 @@ TEST(CommontDevice, Access) {
 
   buf[5] = buf[10];
   ASSERT_EQ(buf[5], buf[10]);
+
+  for (auto v : buf){
+    fmt::print("{} ", v);
+  }
 }
