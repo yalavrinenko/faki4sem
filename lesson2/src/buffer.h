@@ -20,6 +20,7 @@ public:
   }
 
   virtual ~buffer_implementation() = default;
+
 private:
   virtual void read_(size_t byte, void *value, size_t size) = 0;
   virtual void write_(size_t byte, const void *value, size_t size) = 0;
@@ -33,8 +34,7 @@ public:
 private:
   void read_(size_t byte, void *value, size_t size) override {
     auto *dst = static_cast<uint8_t *>(value);
-    const auto *read_base =
-        reinterpret_cast<const uint8_t *>(base_) + byte;
+    const auto *read_base = reinterpret_cast<const uint8_t *>(base_) + byte;
 
     std::copy_n(read_base, size, dst);
   }
@@ -47,7 +47,7 @@ private:
   }
 
   cooldev::memory::sq_address base_;
-  uint64_t size_;
+  [[maybe_unused]] uint64_t size_;
 };
 
 class nd_buffer_impl : public buffer_implementation {
@@ -66,18 +66,18 @@ private:
   }
 
   void write_(size_t byte, const void *value, size_t size) override {
-    const auto* src = static_cast<const uint8_t *>(value);
-    for (auto &rank_start : base_){
-      auto* dst = reinterpret_cast<uint8_t *>(rank_start) + byte;
+    const auto *src = static_cast<const uint8_t *>(value);
+    for (auto &rank_start: base_) {
+      auto *dst = reinterpret_cast<uint8_t *>(rank_start) + byte;
       std::copy(src, src + size, dst);
     }
   }
 
   cooldev::memory::nd_address base_;
-  uint64_t size_;
+  [[maybe_unused]] uint64_t size_;
 };
 
-template <typename T, typename Reference>
+template<typename T, typename Reference>
 class Iterator;
 
 template<typename T>
@@ -106,21 +106,13 @@ public:
 
   void store(size_t i, const T &value) { impl_->write(i, value); }
 
-  auto begin(){
-    return Iterator<T, ProxyObject<T>>(this, 0);
-  }
+  auto begin() { return Iterator<T, ProxyObject<T>>(this, 0); }
 
-  auto end(){
-    return Iterator<T, ProxyObject<T>>(this, size_);
-  }
+  auto end() { return Iterator<T, ProxyObject<T>>(this, size_); }
 
-  auto begin() const {
-    return Iterator<T, T>(this, 0);
-  }
+  auto begin() const { return Iterator<T, T>(this, 0); }
 
-  auto end() const {
-    return Iterator<T, T>(this, size_);
-  }
+  auto end() const { return Iterator<T, T>(this, size_); }
 
 private:
   std::unique_ptr<buffer_implementation> impl_;
@@ -149,8 +141,8 @@ private:
   buffer<T> &parent_;
 };
 
-template <typename T, typename Reference>
-class Iterator{
+template<typename T, typename Reference>
+class Iterator {
 public:
   using iterator_category = std::random_access_iterator_tag;
   using value_type = T;
@@ -158,40 +150,30 @@ public:
   using difference_type = size_t;
 
 public:
-
-  bool operator != (const Iterator<T, Reference> &rhs) const {
+  bool operator!=(const Iterator<T, Reference> &rhs) const {
     return (base_ == rhs.base_) && (index_ != rhs.index_);
   }
 
-  reference operator* () {
-    return base_->operator[](index_);
-  }
+  reference operator*() { return base_->operator[](index_); }
 
-  reference operator* () const {
-    return base_->operator[](index_);
-  }
+  reference operator*() const { return base_->operator[](index_); }
 
-  reference operator-> () {
-    return base_->operator[](index_);
-  }
+  reference operator->() { return base_->operator[](index_); }
 
-  reference operator-> () const {
-    return base_->operator[](index_);
-  }
+  reference operator->() const { return base_->operator[](index_); }
 
-  auto& operator++ (){
+  auto &operator++() {
     ++index_;
     return *this;
   }
 
-  auto& operator+= (difference_type n){
+  auto &operator+=(difference_type n) {
     index_ += n;
     return *this;
   }
 
 protected:
-  Iterator(buffer<T> *base, uint64_t index): base_{base}, index_{index}{
-  }
+  Iterator(buffer<T> *base, uint64_t index) : base_{base}, index_{index} {}
 
 private:
   friend class buffer<T>;
